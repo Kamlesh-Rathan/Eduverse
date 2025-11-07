@@ -17,16 +17,7 @@ EduVerse is an **AI-powered, gamified learning ecosystem** designed for Indian s
 
 ---
 
-### 2. **Gamification**
-
-* **XP System:** Students earn experience points for completing study sessions, solving doubts, creating mindmaps, etc.
-* **Levels:** Unlock new features or visual rewards as students level up.
-* **Achievements/Badges:** Rewards for milestones like 7-day study streak, mastering a chapter, or answering 50 doubts.
-* **In-Game Currency:** Can be used for unlocking cheat sheets, mindmap templates, or cosmetic app items.
-
----
-
-### 3. **Cheat Sheet & Quick Reference Tools**
+### 2. **Cheat Sheet & Quick Reference Tools**
 
 * **Cheat Sheet Generator:** Summarizes concepts from NCERT or user’s notes into **ready-to-use sheets**.
 * **Physics Unit Converter:** Quick conversion for units (e.g., Joule → eV, m/s → km/h).
@@ -35,25 +26,15 @@ EduVerse is an **AI-powered, gamified learning ecosystem** designed for Indian s
 
 ---
 
-### 4. **Focus Sessions**
-
-* Users can start **timed focus sessions**, with optional **Pomodoro-style breaks**.
-* AI tracks study duration and **gives a score** based on focus consistency.
-* Notifications/reminders to **resume study** if idle.
-
----
-
-### 5. **Intelligent Schedule Planner**
+### 3. **Intelligent Schedule Planner**
 
 * AI asks students for their **available daily free hours**.
 * Generates a **personalized study schedule** (subjects, chapters, breaks).
-* Sends **reminders during scheduled study hours**.
-* Adjusts schedule dynamically based on **progress, streaks, and upcoming exams**.
 * Calculates an **AI daily score**: tracks how much time was studied versus planned.
 
 ---
 
-### 6. **Mindmap Maker**
+### 4. **Mindmap Maker**
 
 * Students can **visually map concepts** (nodes and sub-nodes) for easier understanding.
 * Can **link nodes to NCERT sources** or AI-generated cheat sheets.
@@ -61,7 +42,7 @@ EduVerse is an **AI-powered, gamified learning ecosystem** designed for Indian s
 
 ---
 
-### 7. **Memory Feature**
+### 5. **Memory Feature**
 
 * AI **remembers past conversations, doubts, and notes**.
 * Can recall concepts, previous questions, or study sessions when asked.
@@ -69,16 +50,7 @@ EduVerse is an **AI-powered, gamified learning ecosystem** designed for Indian s
 
 ---
 
-### 8. **Social & Collaborative Features**
-
-* **Friends and Study Groups:** Add friends, join study groups, discuss problems.
-* **Global & Friends Leaderboard:** Track XP, streaks, and study achievements.
-* **Streak Tracking:** Encourages daily consistency; badges for consecutive study days.
-* **Collaborative Mindmaps:** Groups can work on shared mindmaps or notes.
-
----
-
-### 9. **NCERT-Driven AI Accuracy**
+### 6. **NCERT-Driven AI Accuracy**
 
 * All AI outputs are **grounded in NCERT books**.
 * For board exams, students can **verify answers and solutions**, building trust in the AI.
@@ -86,10 +58,9 @@ EduVerse is an **AI-powered, gamified learning ecosystem** designed for Indian s
 
 ---
 
-### 10. **Overall Student Experience**
+### 7. **Overall Student Experience**
 
-* **All-in-one ecosystem:** Doubts, cheat sheets, revision, scheduling, and social learning.
-* **Gamified engagement:** Turns study into a challenge, like a game.
-* **Motivation & accountability:** Leaderboards, streaks, and AI reminders keep students consistent.
+* **All-in-one ecosystem:** Doubts, cheat sheets, revision, scheduling, and note-taking.
+* **Motivation & accountability:** AI reminders keep students consistent.
 * **Board exam alignment:** NCERT referencing ensures **accuracy and exam readiness**.
 * **Customizable & AI-driven:** Every student’s schedule, study plan, and AI suggestions adapt to their pace.

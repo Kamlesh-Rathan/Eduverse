@@ -1,0 +1,56 @@
+EduVerse - 8 Simple Build Prompts for Windsurf (100% FREE with OpenRouter)
+Copy-paste these prompts one by one into Windsurf to build your MVP:
+
+1. Home Screen & Navigation
+Create a React app for EduVerse with a clean home screen showing the app name, a welcome message for students,
+and a navigation bar with 4 buttons: "Ask Doubt", "Cheat Sheets", "Mindmap", and "Schedule". Use a
+student-friendly color scheme with blue and white. Keep the design simple and mobile-responsive.
+
+2. AI Doubt Solver (Text Input) - FREE with OpenRouter
+Build an "Ask Doubt" page with a text input box where students can type their question, a submit button, and a
+response area below. Integrate OpenRouter API (https://openrouter.ai) using completely free models like
+"meta-llama/llama-3.2-3b-instruct:free" or "google/gemma-2-9b-it:free" or"microsoft/phi-3-mini-128k-instruct:free".
+The AI should respond in a student-friendly way and mention which NCERT chapter/topic
+(Class 11-12 Maths/Physics/Chemistry) the answer relates to. Display the AI's response with proper formatting.
+Store the last 5 questions and answers in localStorage so the AI can reference them for context in future
+questions.
+
+3. Cheat Sheet Generator - FREE with OpenRouter
+Create a "Cheat Sheets" page with an input field where students can enter a topic (like "Newton's Laws" or
+"Organic Chemistry Reactions"). When they click "Generate", use OpenRouter's free models like
+"meta-llama/llama-3.2-3b-instruct:free" to create a concise cheat sheet with 5-7 bullet points summarizing the
+key concepts. Add a "Save" button that stores the cheat sheet in localStorage. Show a list of all saved cheat
+sheets below, with options to view or delete each one.
+
+4. Simple Mindmap Maker - FREE
+Build a "Mindmap" page where students can create visual mind maps. Add a text input and "Add Node" button to
+create boxes with text. Use React state and basic CSS for a simple draggable layout (or use the free library
+"react-flow-renderer") where nodes can be connected with lines. Include buttons to "Add Child Node" (creates a
+connected sub-node) and "Delete Node". Store mindmaps in localStorage. No external paid services needed.
+
+5. Schedule Planner with AI - FREE with OpenRouter
+Create a "Schedule" page with a form asking: "Which subjects are you studying?" (checkboxes for Maths, Physics,
+Chemistry), and "How many hours can you study daily?" (dropdown 1-8 hours). When submitted, use OpenRouter's
+free models like "meta-llama/llama-3.2-3b-instruct:free" to generate a simple weekly study schedule showing
+which subjects to study on which days and for how long. Display the schedule in a clean table format and store
+it in localStorage.
+
+6. Study Timer & Daily Score - FREE
+Add a study timer feature to the home screen with Start, Pause, and Stop buttons (default 25 minutes) using
+JavaScript setInterval (no external services). Track total minutes studied today in localStorage. On the
+Schedule page, show "Today's Goal" (from their schedule) vs "Actual Time Studied" and calculate a daily score
+percentage. Reset the daily counter at midnight using JavaScript Date functions.
+
+7. Memory & Conversation History - FREE
+Create a "My Doubts" page that shows all previously asked questions and their answers in a timeline format,
+newest first, all stored in localStorage. When a student asks a new doubt, retrieve the last 3-5 doubts from
+localStorage and include them as context in the prompt to OpenRouter's free models so the model can give more
+personalized responses like "Based on your previous question about kinematics...". Store all conversations
+locally with timestamps.
+
+8. Image Upload for Doubts - FREE with OpenRouter + OCR
+Enhance the "Ask Doubt" page to allow students to upload an image of their question (from a textbook or
+worksheet). Add an image upload button next to the text input. Use Tesseract.js (completely free, runs in
+browser) to extract text from the image via OCR. Then send the extracted text to OpenRouter's free models
+like "meta-llama/llama-3.2-3b-instruct:free" with the prompt "Solve this question and explain the solution
+step-by-step. Mention which NCERT chapter this relates to." Display the AI's response below the image.
