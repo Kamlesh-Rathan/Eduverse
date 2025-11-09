@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, memo } from 'react'
 import axios from 'axios'
 import ReactFlow, {
   MiniMap,
@@ -8,12 +8,181 @@ import ReactFlow, {
   useEdgesState,
   addEdge,
   MarkerType,
+  Handle,
+  Position,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import './Mindmap.css'
 
 let nodeId = 0
 const getId = () => `node_${nodeId++}`
+
+// Dynamic size calculation function
+const calculateNodeSize = (text, isDetailNode = false) => {
+  const minWidth = 120
+  const maxWidth = isDetailNode ? 400 : 300
+  const charWidth = 8
+  const padding = 40
+  
+  let width = Math.min(maxWidth, Math.max(minWidth, text.length * charWidth + padding))
+  
+  // Calculate height based on text wrapping
+  const charsPerLine = Math.floor((width - padding) / charWidth)
+  const numLines = Math.ceil(text.length / charsPerLine)
+  const lineHeight = 20
+  const verticalPadding = 24
+  let height = Math.max(50, (numLines * lineHeight) + verticalPadding)
+  
+  return { width, height }
+}
+
+// Custom Editable Node Component
+const EditableNode = memo(({ data, id }) => {
+  console.log('🔵 EditableNode rendered:', { id, label: data.label, hasOnEdit: !!data.onEdit })
+  
+  const [isEditing, setIsEditing] = useState(false)
+  const [editedText, setEditedText] = useState(data.label)
+  const [isHovered, setIsHovered] = useState(false)
+
+  const handleSave = () => {
+    console.log('💾 Saving node:', { id, oldText: data.label, newText: editedText })
+    const trimmedText = editedText.trim()
+    if (!trimmedText) {
+      alert('Node text cannot be empty')
+      setEditedText(data.label)
+      setIsEditing(false)
+      return
+    }
+    if (data.onEdit) {
+      console.log('✅ Calling onEdit callback')
+      data.onEdit(id, trimmedText)
+    } else {
+      console.log('❌ No onEdit callback found!')
+    }
+    setIsEditing(false)
+  }
+
+  const handleCancel = () => {
+    setIsEditing(false)
+    setEditedText(data.label)
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSave()
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      handleCancel()
+    }
+  }
+
+  const isDetailNode = data.isDetailNode || false
+
+  return (
+    <div 
+      className={`editable-node ${isDetailNode ? 'detail-node' : ''} ${isEditing ? 'editing' : ''}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onMouseDown={(e) => {
+        if (!isEditing) {
+          e.preventDefault()
+          e.stopPropagation()
+          console.log('🖱️ Node mousedown detected!', { id, isEditing })
+          setIsEditing(true)
+          setEditedText(data.label)
+        }
+      }}
+      onClick={(e) => {
+        if (!isEditing) {
+          e.stopPropagation()
+          console.log('🖱️ Node click detected (fallback)!', { id, isEditing })
+          setIsEditing(true)
+          setEditedText(data.label)
+        }
+      }}
+      onDoubleClick={(e) => {
+        if (!isEditing) {
+          e.stopPropagation()
+          console.log('🖱️ Node double-click detected (extra fallback)!', { id, isEditing })
+          setIsEditing(true)
+          setEditedText(data.label)
+        }
+      }}
+      style={{ 
+        pointerEvents: 'all',
+        cursor: isEditing ? 'text' : 'pointer',
+      }}
+    >
+      <Handle type="target" position={Position.Top} />
+      
+      {isEditing ? (
+        isDetailNode ? (
+          <textarea
+            value={editedText}
+            onChange={(e) => setEditedText(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleSave}
+            autoFocus
+            className="node-edit-textarea"
+            maxLength={500}
+            style={{
+              width: '100%',
+              height: '100%',
+              border: 'none',
+              outline: 'none',
+              resize: 'none',
+              fontSize: '13px',
+              background: 'rgba(255, 255, 255, 0.8)',
+              textAlign: 'left',
+              color: '#000',
+              padding: '4px',
+            }}
+          />
+        ) : (
+          <input
+            type="text"
+            value={editedText}
+            onChange={(e) => setEditedText(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleSave}
+            autoFocus
+            className="node-edit-input"
+            maxLength={200}
+            style={{
+              width: '100%',
+              border: 'none',
+              outline: 'none',
+              fontSize: '14px',
+              background: 'rgba(255, 255, 255, 0.8)',
+              textAlign: 'center',
+              color: '#000',
+              padding: '4px',
+            }}
+          />
+        )
+      ) : (
+        <div 
+          className="node-content"
+          title="Click to edit"
+        >
+          {data.label}
+          {isHovered && <span className="edit-hint">✏️</span>}
+        </div>
+      )}
+      
+      <Handle type="source" position={Position.Bottom} />
+    </div>
+  )
+})
+
+EditableNode.displayName = 'EditableNode'
+
+const nodeTypes = {
+  editableNode: EditableNode,
+}
+
+console.log('🎨 nodeTypes registered:', Object.keys(nodeTypes))
 
 function Mindmap() {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
@@ -22,11 +191,23 @@ function Mindmap() {
   const [nodeText, setNodeText] = useState('')
   const [savedMindmaps, setSavedMindmaps] = useState([])
   const [currentMindmapName, setCurrentMindmapName] = useState('')
+  const [currentMindmapId, setCurrentMindmapId] = useState(null)
   const [showSaveDialog, setShowSaveDialog] = useState(false)
+  const [showSaveAsDialog, setShowSaveAsDialog] = useState(false)
   const [aiTopic, setAiTopic] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
 
   // Load saved mindmaps from localStorage
+  // Brave browser detection and warning
+  useEffect(() => {
+    const checkBrave = async () => {
+      if (navigator.brave && await navigator.brave.isBrave()) {
+        console.warn('⚠️ Brave browser detected. If nodes are not editable, try disabling Shields for this site or use Chrome/Firefox.')
+      }
+    }
+    checkBrave()
+  }, [])
+
   useEffect(() => {
     const saved = localStorage.getItem('eduverse_mindmaps')
     if (saved) {
@@ -53,80 +234,247 @@ function Mindmap() {
 
   // Handle node selection
   const onNodeClick = useCallback((event, node) => {
+    console.log('🎯 Node selected:', { 
+      id: node.id, 
+      label: node.data.label,
+      level: node.data.level 
+    })
     setSelectedNode(node)
   }, [])
 
-  // Add a new root node
-  const addNode = () => {
+  // Handle node text editing
+  const handleNodeEdit = useCallback((nodeId, newText) => {
+    console.log('📝 handleNodeEdit called:', { nodeId, newText })
+    
+    setNodes((nds) => {
+      console.log('🔄 Current nodes:', nds.length)
+      const updatedNodes = nds.map((node) => {
+        if (node.id === nodeId) {
+          console.log('✅ Found node to update:', node.id)
+          const isDetailNode = node.data.isDetailNode || false
+          const { width, height } = calculateNodeSize(newText, isDetailNode)
+          console.log('📏 New size:', { width, height })
+          
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              label: newText,
+            },
+            style: {
+              ...node.style,
+              width: `${width}px`,
+              height: `${height}px`,
+            },
+          }
+        }
+        return node
+      })
+      console.log('✅ Nodes updated')
+      return updatedNodes
+    })
+  }, [setNodes])
+
+  // Add a new root node (Level 0)
+  const addRootNode = () => {
     if (!nodeText.trim()) {
       alert('Please enter text for the node')
       return
     }
 
+    const { width, height } = calculateNodeSize(nodeText.trim())
+
     const newNode = {
-      id: getId(),
-      type: 'default',
-      data: { label: nodeText.trim() },
-      position: { 
-        x: Math.random() * 400 + 100, 
-        y: Math.random() * 300 + 100 
+      id: `node-${Date.now()}`,
+      type: 'editableNode',
+      data: { 
+        label: nodeText.trim(),
+        onEdit: handleNodeEdit,
+        level: 0,
       },
-      style: {
-        background: '#2563eb',
-        color: 'white',
-        border: '2px solid #1e40af',
+      position: { x: 400, y: 50 },
+      style: { 
+        width: `${width}px`, 
+        height: `${height}px`,
+        background: '#e3f2fd',
+        color: '#000',
+        border: '2px solid #2196F3',
         borderRadius: '8px',
-        padding: '10px',
-        fontSize: '14px',
-        fontWeight: '600',
+        padding: '8px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       },
     }
 
     setNodes((nds) => [...nds, newNode])
     setNodeText('')
+    setSelectedNode(null)
   }
 
-  // Add a child node connected to selected node
-  const addChildNode = () => {
-    if (!selectedNode) {
-      alert('Please select a parent node first')
+  // Add Level 1 node (Main Branch)
+  const addLevel1Node = () => {
+    if (!selectedNode || selectedNode.data.level !== 0) {
+      alert('Please select a root node (Level 0) first')
       return
     }
 
     if (!nodeText.trim()) {
-      alert('Please enter text for the child node')
+      alert('Please enter text for the node')
       return
     }
 
-    const childId = getId()
+    const { width, height } = calculateNodeSize(nodeText.trim())
+    
+    const level1Children = edges.filter(e => e.source === selectedNode.id).length
+
     const newNode = {
-      id: childId,
-      type: 'default',
-      data: { label: nodeText.trim() },
-      position: {
-        x: selectedNode.position.x + 200,
-        y: selectedNode.position.y + 100,
+      id: `node-${Date.now()}`,
+      type: 'editableNode',
+      data: { 
+        label: nodeText.trim(),
+        onEdit: handleNodeEdit,
+        level: 1,
+        parentId: selectedNode.id,
       },
-      style: {
-        background: '#10b981',
-        color: 'white',
-        border: '2px solid #059669',
+      position: {
+        x: selectedNode.position.x + (level1Children * 200) - 100,
+        y: selectedNode.position.y + 150,
+      },
+      style: { 
+        width: `${width}px`, 
+        height: `${height}px`,
+        background: '#c8e6c9',
+        color: '#000',
+        border: '2px solid #4CAF50',
         borderRadius: '8px',
-        padding: '10px',
-        fontSize: '14px',
-        fontWeight: '600',
+        padding: '8px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       },
     }
 
     const newEdge = {
-      id: `e${selectedNode.id}-${childId}`,
+      id: `edge-${Date.now()}`,
       source: selectedNode.id,
-      target: childId,
+      target: newNode.id,
       type: 'smoothstep',
       animated: true,
-      markerEnd: {
-        type: MarkerType.ArrowClosed,
+    }
+
+    setNodes((nds) => [...nds, newNode])
+    setEdges((eds) => [...eds, newEdge])
+    setNodeText('')
+  }
+
+  // Add Level 2 node (Sub-Branch)
+  const addLevel2Node = () => {
+    if (!selectedNode || selectedNode.data.level !== 1) {
+      alert('Please select a Level 1 node first')
+      return
+    }
+
+    if (!nodeText.trim()) {
+      alert('Please enter text for the node')
+      return
+    }
+
+    const { width, height } = calculateNodeSize(nodeText.trim())
+    
+    const level2Children = edges.filter(e => e.source === selectedNode.id).length
+
+    const newNode = {
+      id: `node-${Date.now()}`,
+      type: 'editableNode',
+      data: { 
+        label: nodeText.trim(),
+        onEdit: handleNodeEdit,
+        level: 2,
+        parentId: selectedNode.id,
       },
+      position: {
+        x: selectedNode.position.x + (level2Children * 180) - 90,
+        y: selectedNode.position.y + 120,
+      },
+      style: { 
+        width: `${width}px`, 
+        height: `${height}px`,
+        background: '#fff3e0',
+        color: '#000',
+        border: '2px solid #FF9800',
+        borderRadius: '8px',
+        padding: '8px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
+    }
+
+    const newEdge = {
+      id: `edge-${Date.now()}`,
+      source: selectedNode.id,
+      target: newNode.id,
+      type: 'smoothstep',
+      animated: true,
+    }
+
+    setNodes((nds) => [...nds, newNode])
+    setEdges((eds) => [...eds, newEdge])
+    setNodeText('')
+  }
+
+  // Add Level 3 detail node
+  const addLevel3DetailNode = () => {
+    if (!selectedNode || selectedNode.data.level !== 2) {
+      alert('Please select a Level 2 node first')
+      return
+    }
+
+    if (!nodeText.trim()) {
+      alert('Please enter text for the detail node')
+      return
+    }
+
+    const { width, height } = calculateNodeSize(nodeText.trim(), true)
+    
+    const level3Children = edges.filter(e => e.source === selectedNode.id).length
+
+    const newNode = {
+      id: `node-${Date.now()}`,
+      type: 'editableNode',
+      data: { 
+        label: nodeText.trim(),
+        onEdit: handleNodeEdit,
+        level: 3,
+        isDetailNode: true,
+        parentId: selectedNode.id,
+      },
+      position: {
+        x: selectedNode.position.x + (level3Children * 200) - 100,
+        y: selectedNode.position.y + 140,
+      },
+      style: { 
+        width: `${width}px`, 
+        height: `${height}px`,
+        background: '#fff9c4',
+        color: '#000',
+        border: '2px solid #FFC107',
+        borderRadius: '8px',
+        padding: '12px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
+    }
+
+    const newEdge = {
+      id: `edge-${Date.now()}`,
+      source: selectedNode.id,
+      target: newNode.id,
+      type: 'smoothstep',
+      animated: true,
+      style: { strokeWidth: 2, stroke: '#FFC107' },
     }
 
     setNodes((nds) => [...nds, newNode])
@@ -327,61 +675,48 @@ Create 12-20 nodes total. Every branch must end with a detailed content node (Le
         // Check if this is a detail node (Level 3 with actual content)
         const isDetailNode = nodeData.isDetailNode === true || (level === 3 && nodeData.text.length > 30)
 
+        // Calculate dynamic size
+        const { width, height } = calculateNodeSize(nodeData.text, isDetailNode)
+
         // Color coding by level and node type
-        let background, border, width, fontSize, padding
-        if (level === 0) {
-          background = '#2563eb'
-          border = '#1e40af'
-          width = 180
-          fontSize = '14px'
-          padding = '10px'
-        } else if (level === 1) {
-          background = '#10b981'
-          border = '#059669'
-          width = 160
-          fontSize = '14px'
-          padding = '10px'
-        } else if (level === 2) {
-          background = '#f59e0b'
-          border = '#d97706'
-          width = 150
-          fontSize = '14px'
-          padding = '10px'
-        } else if (isDetailNode) {
-          // Detail nodes - larger with different styling
-          background = '#fef3c7' // Light yellow
-          border = '#f59e0b'
-          width = 280
-          fontSize = '12px'
-          padding = '12px'
-        } else {
-          background = '#f59e0b'
-          border = '#d97706'
-          width = 150
-          fontSize = '14px'
-          padding = '10px'
+        const colors = {
+          0: { bg: '#e3f2fd', border: '#2196F3' },
+          1: { bg: '#c8e6c9', border: '#4CAF50' },
+          2: { bg: '#fff3e0', border: '#FF9800' },
+          3: { bg: '#fff9c4', border: '#FFC107' }
         }
+        
+        const color = colors[level] || colors[3]
+        const background = color.bg
+        const border = color.border
+        const fontSize = isDetailNode ? '13px' : '14px'
+        const padding = isDetailNode ? '12px' : '8px'
         
         newNodes.push({
           id: nodeId,
-          type: 'default',
+          type: 'editableNode',
           data: { 
             label: nodeData.text,
-            isDetailNode: isDetailNode
+            level: level,
+            isDetailNode: isDetailNode,
+            onEdit: handleNodeEdit,
           },
           position: { x, y },
           style: {
             background,
-            color: isDetailNode ? '#78350f' : 'white', // Dark text for detail nodes
+            color: '#000',
             border: `2px solid ${border}`,
             borderRadius: '8px',
             padding,
             fontSize,
-            fontWeight: isDetailNode ? '500' : '600',
+            fontWeight: '500',
             width: `${width}px`,
-            minHeight: isDetailNode ? '80px' : 'auto',
-            whiteSpace: isDetailNode ? 'normal' : 'nowrap',
-            wordWrap: isDetailNode ? 'break-word' : 'normal',
+            height: `${height}px`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            whiteSpace: 'normal',
+            wordWrap: 'break-word',
             textAlign: isDetailNode ? 'left' : 'center',
             lineHeight: isDetailNode ? '1.4' : '1.2',
           },
@@ -407,6 +742,7 @@ Create 12-20 nodes total. Every branch must end with a detailed content node (Le
       setNodes(newNodes)
       setEdges(newEdges)
       setCurrentMindmapName(mindmapData.title || aiTopic.trim())
+      setCurrentMindmapId(null) // Reset ID for new AI-generated mindmap
       setAiTopic('')
       setSelectedNode(null)
 
@@ -442,6 +778,7 @@ Create 12-20 nodes total. Every branch must end with a detailed content node (Le
       setEdges([])
       setSelectedNode(null)
       setCurrentMindmapName('')
+      setCurrentMindmapId(null)
     }
   }
 
@@ -451,7 +788,31 @@ Create 12-20 nodes total. Every branch must end with a detailed content node (Le
       alert('Cannot save an empty mindmap')
       return
     }
-    setShowSaveDialog(true)
+    
+    // If editing existing mindmap, update it directly without dialog
+    if (currentMindmapId) {
+      updateExistingMindmap()
+    } else {
+      // New mindmap, show save dialog
+      setShowSaveDialog(true)
+    }
+  }
+
+  const updateExistingMindmap = () => {
+    const index = savedMindmaps.findIndex(m => m.id === currentMindmapId)
+    if (index !== -1) {
+      const updatedMindmaps = [...savedMindmaps]
+      updatedMindmaps[index] = {
+        ...updatedMindmaps[index],
+        name: currentMindmapName,
+        nodes,
+        edges,
+        updatedAt: new Date().toISOString(),
+      }
+      localStorage.setItem('eduverse_mindmaps', JSON.stringify(updatedMindmaps))
+      setSavedMindmaps(updatedMindmaps)
+      alert('✅ Mindmap updated successfully!')
+    }
   }
 
   const confirmSave = () => {
@@ -461,18 +822,52 @@ Create 12-20 nodes total. Every branch must end with a detailed content node (Le
     }
 
     const mindmap = {
-      id: Date.now(),
+      id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
       name: currentMindmapName.trim(),
       nodes,
       edges,
-      timestamp: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     }
 
     const updated = [mindmap, ...savedMindmaps]
     localStorage.setItem('eduverse_mindmaps', JSON.stringify(updated))
     setSavedMindmaps(updated)
+    setCurrentMindmapId(mindmap.id)
     setShowSaveDialog(false)
-    alert('✅ Mindmap saved successfully!')
+    alert('✅ New mindmap saved successfully!')
+  }
+
+  // Save as new copy
+  const saveAsNewCopy = () => {
+    if (nodes.length === 0) {
+      alert('Cannot save an empty mindmap')
+      return
+    }
+    setShowSaveAsDialog(true)
+  }
+
+  const confirmSaveAs = () => {
+    if (!currentMindmapName.trim()) {
+      alert('Please enter a name for the new mindmap')
+      return
+    }
+
+    const mindmap = {
+      id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+      name: currentMindmapName.trim(),
+      nodes,
+      edges,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    const updated = [mindmap, ...savedMindmaps]
+    localStorage.setItem('eduverse_mindmaps', JSON.stringify(updated))
+    setSavedMindmaps(updated)
+    setCurrentMindmapId(mindmap.id)
+    setShowSaveAsDialog(false)
+    alert('✅ New copy saved successfully!')
   }
 
   // Load a saved mindmap
@@ -486,6 +881,7 @@ Create 12-20 nodes total. Every branch must end with a detailed content node (Le
     setNodes(mindmap.nodes)
     setEdges(mindmap.edges)
     setCurrentMindmapName(mindmap.name)
+    setCurrentMindmapId(mindmap.id)
     setSelectedNode(null)
   }
 
@@ -523,6 +919,11 @@ Create 12-20 nodes total. Every branch must end with a detailed content node (Le
                       <div className="mindmap-item-meta">
                         {mindmap.nodes.length} nodes
                       </div>
+                      {mindmap.updatedAt && (
+                        <div className="mindmap-item-date">
+                          Updated: {new Date(mindmap.updatedAt).toLocaleDateString()}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <button
@@ -576,39 +977,119 @@ Create 12-20 nodes total. Every branch must end with a detailed content node (Le
             </div>
           </div>
 
-          {/* Manual Controls */}
-          <div className="mindmap-controls">
-            <div className="control-group">
+          {/* Edit Mode Indicator */}
+          {currentMindmapId && (
+            <div className="edit-mode-indicator">
+              <span className="edit-icon">✏️</span>
+              <span className="edit-text">Editing: <strong>{currentMindmapName}</strong></span>
+            </div>
+          )}
+
+          {/* Node Creation Section */}
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">Create Nodes</h3>
+            
+            <div className="space-y-4">
+              {/* Text Input */}
               <input
                 type="text"
                 value={nodeText}
                 onChange={(e) => setNodeText(e.target.value)}
                 placeholder="Enter node text..."
-                className="node-input"
-                onKeyPress={(e) => e.key === 'Enter' && addNode()}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && nodeText.trim()) {
+                    if (selectedNode) {
+                      if (selectedNode.data.level === 1) {
+                        addLevel2Node()
+                      } else if (selectedNode.data.level === 2) {
+                        addLevel3DetailNode()
+                      }
+                    } else {
+                      addRootNode()
+                    }
+                  }
+                }}
               />
-              <button onClick={addNode} className="btn-add-node">
-                ➕ Add Node
-              </button>
-              <button 
-                onClick={addChildNode} 
-                className="btn-add-child"
-                disabled={!selectedNode}
-              >
-                🔗 Add Child
-              </button>
-              <button 
-                onClick={deleteNode} 
-                className="btn-delete"
-                disabled={!selectedNode}
-              >
-                🗑️ Delete
-              </button>
+
+              {/* Button Grid */}
+              <div className="grid grid-cols-1 gap-3">
+                {/* Add Root Node (Level 0) */}
+                <button
+                  onClick={addRootNode}
+                  disabled={!nodeText.trim() || selectedNode !== null}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-left"
+                >
+                  ➕ Add Root Node (Level 0)
+                </button>
+
+                {/* Add Level 1 Node */}
+                <button
+                  onClick={addLevel1Node}
+                  disabled={!nodeText.trim() || !selectedNode || selectedNode.data.level !== 0}
+                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-left"
+                >
+                  <div>➕ Add Main Branch (Level 1)</div>
+                  {selectedNode && selectedNode.data.level !== 0 && (
+                    <div className="text-xs mt-1">Select a root node first</div>
+                  )}
+                </button>
+
+                {/* Add Level 2 Node */}
+                <button
+                  onClick={addLevel2Node}
+                  disabled={!nodeText.trim() || !selectedNode || selectedNode.data.level !== 1}
+                  className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-left"
+                >
+                  <div>➕ Add Sub-Branch (Level 2)</div>
+                  {selectedNode && selectedNode.data.level !== 1 && (
+                    <div className="text-xs mt-1">Select a Level 1 node first</div>
+                  )}
+                </button>
+
+                {/* Add Level 3 Detail Node */}
+                <button
+                  onClick={addLevel3DetailNode}
+                  disabled={!nodeText.trim() || !selectedNode || selectedNode.data.level !== 2}
+                  className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-left"
+                >
+                  <div>➕ Add Detail Node (Level 3)</div>
+                  {selectedNode && selectedNode.data.level !== 2 && (
+                    <div className="text-xs mt-1">Select a Level 2 node first</div>
+                  )}
+                </button>
+
+                {/* Delete Button */}
+                <button 
+                  onClick={deleteNode} 
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  disabled={!selectedNode}
+                >
+                  🗑️ Delete Selected Node
+                </button>
+              </div>
+
+              {/* Selection Info */}
+              {selectedNode && (
+                <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+                  <strong>Selected:</strong> {selectedNode.data.label} 
+                  <span className="ml-2 text-blue-600 font-semibold">(Level {selectedNode.data.level ?? 'Unknown'})</span>
+                </div>
+              )}
             </div>
+          </div>
+
+          {/* Save/Clear Controls */}
+          <div className="mindmap-controls">
             <div className="control-group">
               <button onClick={saveMindmap} className="btn-save">
-                💾 Save
+                {currentMindmapId ? '💾 Update Mindmap' : '💾 Save New Mindmap'}
               </button>
+              {currentMindmapId && (
+                <button onClick={saveAsNewCopy} className="btn-save-as">
+                  📋 Save As New Copy
+                </button>
+              )}
               <button onClick={clearMindmap} className="btn-clear">
                 🧹 Clear All
               </button>
@@ -616,7 +1097,7 @@ Create 12-20 nodes total. Every branch must end with a detailed content node (Le
           </div>
 
           {selectedNode && (
-            <div className="selected-node-info">
+            <div className="selected-node-info" style={{ display: 'none' }}>
               <strong>Selected:</strong> {selectedNode.data.label}
             </div>
           )}
@@ -645,6 +1126,7 @@ Create 12-20 nodes total. Every branch must end with a detailed content node (Le
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
                 onNodeClick={onNodeClick}
+                nodeTypes={nodeTypes}
                 fitView
               >
                 <Controls />
@@ -663,7 +1145,7 @@ Create 12-20 nodes total. Every branch must end with a detailed content node (Le
       {showSaveDialog && (
         <div className="modal-overlay" onClick={() => setShowSaveDialog(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>Save Mindmap</h3>
+            <h3>Save New Mindmap</h3>
             <input
               type="text"
               value={currentMindmapName}
@@ -678,6 +1160,32 @@ Create 12-20 nodes total. Every branch must end with a detailed content node (Le
                 Save
               </button>
               <button onClick={() => setShowSaveDialog(false)} className="btn-cancel">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save As Dialog */}
+      {showSaveAsDialog && (
+        <div className="modal-overlay" onClick={() => setShowSaveAsDialog(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Save As New Copy</h3>
+            <input
+              type="text"
+              value={currentMindmapName + ' (Copy)'}
+              onChange={(e) => setCurrentMindmapName(e.target.value)}
+              placeholder="Enter name for new copy..."
+              className="modal-input"
+              autoFocus
+              onKeyPress={(e) => e.key === 'Enter' && confirmSaveAs()}
+            />
+            <div className="modal-buttons">
+              <button onClick={confirmSaveAs} className="btn-confirm">
+                Save Copy
+              </button>
+              <button onClick={() => setShowSaveAsDialog(false)} className="btn-cancel">
                 Cancel
               </button>
             </div>
