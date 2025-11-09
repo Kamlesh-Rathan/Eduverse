@@ -1,3 +1,62 @@
+/* =================================================================
+   THEME SYSTEM - CSS VARIABLES
+   ================================================================= */
+
+:root {
+  /* Light Mode Colors */
+  --bg-primary: #f0f4ff;
+  --bg-secondary: #ffffff;
+  --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-shadow: rgba(0, 0, 0, 0.1);
+  
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --hover-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-gradient: linear-gradient(135deg, #1e3a8a 0%, #6b21a8 100%);
+  
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  
+  --glass-bg: rgba(30, 41, 59, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: rgba(0, 0, 0, 0.3);
+  
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --hover-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+}
+
+/* Base Styles */
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-gradient);
+  opacity: 0.1;
+  z-index: -1;
+  pointer-events: none;
+}
+
 .app {
   min-height: 100vh;
   display: flex;

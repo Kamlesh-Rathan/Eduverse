@@ -44,7 +44,19 @@ const EditableNode = memo(({ data, id }) => {
   const [editedText, setEditedText] = useState(data.label)
   const [isHovered, setIsHovered] = useState(false)
 
-  const handleSave = () => {
+  const handleStartEdit = (e) => {
+    e.stopPropagation()
+    e.preventDefault()
+    console.log('✏️ Starting edit mode:', { id })
+    setIsEditing(true)
+    setEditedText(data.label)
+  }
+
+  const handleSave = (e) => {
+    if (e) {
+      e.stopPropagation()
+      e.preventDefault()
+    }
     console.log('💾 Saving node:', { id, oldText: data.label, newText: editedText })
     const trimmedText = editedText.trim()
     if (!trimmedText) {
@@ -62,7 +74,11 @@ const EditableNode = memo(({ data, id }) => {
     setIsEditing(false)
   }
 
-  const handleCancel = () => {
+  const handleCancel = (e) => {
+    if (e) {
+      e.stopPropagation()
+      e.preventDefault()
+    }
     setIsEditing(false)
     setEditedText(data.label)
   }
@@ -84,90 +100,98 @@ const EditableNode = memo(({ data, id }) => {
       className={`editable-node ${isDetailNode ? 'detail-node' : ''} ${isEditing ? 'editing' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onMouseDown={(e) => {
-        if (!isEditing) {
-          e.preventDefault()
-          e.stopPropagation()
-          console.log('🖱️ Node mousedown detected!', { id, isEditing })
-          setIsEditing(true)
-          setEditedText(data.label)
-        }
-      }}
-      onClick={(e) => {
-        if (!isEditing) {
-          e.stopPropagation()
-          console.log('🖱️ Node click detected (fallback)!', { id, isEditing })
-          setIsEditing(true)
-          setEditedText(data.label)
-        }
-      }}
-      onDoubleClick={(e) => {
-        if (!isEditing) {
-          e.stopPropagation()
-          console.log('🖱️ Node double-click detected (extra fallback)!', { id, isEditing })
-          setIsEditing(true)
-          setEditedText(data.label)
-        }
-      }}
       style={{ 
         pointerEvents: 'all',
-        cursor: isEditing ? 'text' : 'pointer',
+        cursor: 'default',
+        position: 'relative',
       }}
     >
       <Handle type="target" position={Position.Top} />
       
-      {isEditing ? (
-        isDetailNode ? (
-          <textarea
-            value={editedText}
-            onChange={(e) => setEditedText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onBlur={handleSave}
-            autoFocus
-            className="node-edit-textarea"
-            maxLength={500}
-            style={{
-              width: '100%',
-              height: '100%',
-              border: 'none',
-              outline: 'none',
-              resize: 'none',
-              fontSize: '13px',
-              background: 'rgba(255, 255, 255, 0.8)',
-              textAlign: 'left',
-              color: '#000',
-              padding: '4px',
-            }}
-          />
-        ) : (
-          <input
-            type="text"
-            value={editedText}
-            onChange={(e) => setEditedText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onBlur={handleSave}
-            autoFocus
-            className="node-edit-input"
-            maxLength={200}
-            style={{
-              width: '100%',
-              border: 'none',
-              outline: 'none',
-              fontSize: '14px',
-              background: 'rgba(255, 255, 255, 0.8)',
-              textAlign: 'center',
-              color: '#000',
-              padding: '4px',
-            }}
-          />
-        )
-      ) : (
-        <div 
-          className="node-content"
-          title="Click to edit"
+      {/* Pencil Icon Button - Only show when NOT editing */}
+      {!isEditing && isHovered && (
+        <button
+          className="node-edit-button"
+          onClick={handleStartEdit}
+          onMouseDown={(e) => e.stopPropagation()}
+          title="Edit node"
         >
+          ✏️
+        </button>
+      )}
+
+      {isEditing ? (
+        <div className="node-edit-container">
+          {isDetailNode ? (
+            <textarea
+              value={editedText}
+              onChange={(e) => setEditedText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              autoFocus
+              className="node-edit-textarea"
+              maxLength={500}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              style={{
+                width: '100%',
+                height: '100%',
+                border: 'none',
+                outline: 'none',
+                resize: 'none',
+                fontSize: '13px',
+                background: 'transparent',
+                textAlign: 'left',
+                color: 'inherit',
+                padding: '4px',
+              }}
+            />
+          ) : (
+            <input
+              type="text"
+              value={editedText}
+              onChange={(e) => setEditedText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              autoFocus
+              className="node-edit-input"
+              maxLength={200}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              style={{
+                width: '100%',
+                border: 'none',
+                outline: 'none',
+                fontSize: '14px',
+                background: 'transparent',
+                textAlign: 'center',
+                color: 'inherit',
+                padding: '4px',
+              }}
+            />
+          )}
+          
+          {/* Save and Cancel Buttons */}
+          <div className="node-edit-actions">
+            <button
+              className="node-save-button"
+              onClick={handleSave}
+              onMouseDown={(e) => e.stopPropagation()}
+              title="Save changes"
+            >
+              ✓
+            </button>
+            <button
+              className="node-cancel-button"
+              onClick={handleCancel}
+              onMouseDown={(e) => e.stopPropagation()}
+              title="Cancel editing"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="node-content">
           {data.label}
-          {isHovered && <span className="edit-hint">✏️</span>}
         </div>
       )}
       
@@ -194,6 +218,7 @@ function Mindmap() {
   const [currentMindmapId, setCurrentMindmapId] = useState(null)
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [showSaveAsDialog, setShowSaveAsDialog] = useState(false)
+  const [saveAsName, setSaveAsName] = useState('')
   const [aiTopic, setAiTopic] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
 
@@ -426,6 +451,12 @@ function Mindmap() {
 
   // Add Level 3 detail node
   const addLevel3DetailNode = () => {
+    console.log('🟡 Add Level 3 Detail Node clicked', {
+      selectedNode: selectedNode?.id,
+      selectedLevel: selectedNode?.data?.level,
+      nodeText: nodeText
+    })
+    
     if (!selectedNode || selectedNode.data.level !== 2) {
       alert('Please select a Level 2 node first')
       return
@@ -844,18 +875,19 @@ Create 12-20 nodes total. Every branch must end with a detailed content node (Le
       alert('Cannot save an empty mindmap')
       return
     }
+    setSaveAsName(currentMindmapName + ' (Copy)')
     setShowSaveAsDialog(true)
   }
 
   const confirmSaveAs = () => {
-    if (!currentMindmapName.trim()) {
+    if (!saveAsName.trim()) {
       alert('Please enter a name for the new mindmap')
       return
     }
 
     const mindmap = {
       id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
-      name: currentMindmapName.trim(),
+      name: saveAsName.trim(),
       nodes,
       edges,
       createdAt: new Date().toISOString(),
@@ -866,6 +898,7 @@ Create 12-20 nodes total. Every branch must end with a detailed content node (Le
     localStorage.setItem('eduverse_mindmaps', JSON.stringify(updated))
     setSavedMindmaps(updated)
     setCurrentMindmapId(mindmap.id)
+    setCurrentMindmapName(saveAsName.trim())
     setShowSaveAsDialog(false)
     alert('✅ New copy saved successfully!')
   }
@@ -985,22 +1018,22 @@ Create 12-20 nodes total. Every branch must end with a detailed content node (Le
             </div>
           )}
 
-          {/* Node Creation Section */}
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Create Nodes</h3>
-            
-            <div className="space-y-4">
-              {/* Text Input */}
+          {/* Unified Controls Panel */}
+          <div className="mindmap-controls">
+            {/* Text Input */}
+            <div className="control-group">
               <input
                 type="text"
                 value={nodeText}
                 onChange={(e) => setNodeText(e.target.value)}
                 placeholder="Enter node text..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="node-input"
                 onKeyPress={(e) => {
                   if (e.key === 'Enter' && nodeText.trim()) {
                     if (selectedNode) {
-                      if (selectedNode.data.level === 1) {
+                      if (selectedNode.data.level === 0) {
+                        addLevel1Node()
+                      } else if (selectedNode.data.level === 1) {
                         addLevel2Node()
                       } else if (selectedNode.data.level === 2) {
                         addLevel3DetailNode()
@@ -1011,83 +1044,67 @@ Create 12-20 nodes total. Every branch must end with a detailed content node (Le
                   }
                 }}
               />
-
-              {/* Button Grid */}
-              <div className="grid grid-cols-1 gap-3">
-                {/* Add Root Node (Level 0) */}
-                <button
-                  onClick={addRootNode}
-                  disabled={!nodeText.trim() || selectedNode !== null}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-left"
-                >
-                  ➕ Add Root Node (Level 0)
-                </button>
-
-                {/* Add Level 1 Node */}
-                <button
-                  onClick={addLevel1Node}
-                  disabled={!nodeText.trim() || !selectedNode || selectedNode.data.level !== 0}
-                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-left"
-                >
-                  <div>➕ Add Main Branch (Level 1)</div>
-                  {selectedNode && selectedNode.data.level !== 0 && (
-                    <div className="text-xs mt-1">Select a root node first</div>
-                  )}
-                </button>
-
-                {/* Add Level 2 Node */}
-                <button
-                  onClick={addLevel2Node}
-                  disabled={!nodeText.trim() || !selectedNode || selectedNode.data.level !== 1}
-                  className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-left"
-                >
-                  <div>➕ Add Sub-Branch (Level 2)</div>
-                  {selectedNode && selectedNode.data.level !== 1 && (
-                    <div className="text-xs mt-1">Select a Level 1 node first</div>
-                  )}
-                </button>
-
-                {/* Add Level 3 Detail Node */}
-                <button
-                  onClick={addLevel3DetailNode}
-                  disabled={!nodeText.trim() || !selectedNode || selectedNode.data.level !== 2}
-                  className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-left"
-                >
-                  <div>➕ Add Detail Node (Level 3)</div>
-                  {selectedNode && selectedNode.data.level !== 2 && (
-                    <div className="text-xs mt-1">Select a Level 2 node first</div>
-                  )}
-                </button>
-
-                {/* Delete Button */}
-                <button 
-                  onClick={deleteNode} 
-                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                  disabled={!selectedNode}
-                >
-                  🗑️ Delete Selected Node
-                </button>
-              </div>
-
-              {/* Selection Info */}
-              {selectedNode && (
-                <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-                  <strong>Selected:</strong> {selectedNode.data.label} 
-                  <span className="ml-2 text-blue-600 font-semibold">(Level {selectedNode.data.level ?? 'Unknown'})</span>
-                </div>
-              )}
             </div>
-          </div>
 
-          {/* Save/Clear Controls */}
-          <div className="mindmap-controls">
-            <div className="control-group">
+            {/* Selection Info */}
+            {selectedNode && (
+              <div className="selection-info">
+                <strong>Selected:</strong> {selectedNode.data.label} 
+                <span className="selection-level">(Level {selectedNode.data.level ?? 'Unknown'})</span>
+              </div>
+            )}
+
+            {/* Node Creation Buttons */}
+            <div className="control-group button-grid">
+              <button
+                onClick={addRootNode}
+                disabled={!nodeText.trim()}
+                className="btn-add-root"
+              >
+                ➕ Add Root Node
+              </button>
+
+              <button
+                onClick={addLevel1Node}
+                disabled={!nodeText.trim() || !selectedNode || selectedNode.data.level !== 0}
+                className="btn-add-level1"
+              >
+                ➕ Add Main Branch
+              </button>
+
+              <button
+                onClick={addLevel2Node}
+                disabled={!nodeText.trim() || !selectedNode || selectedNode.data.level !== 1}
+                className="btn-add-level2"
+              >
+                ➕ Add Sub-Branch
+              </button>
+
+              <button
+                onClick={addLevel3DetailNode}
+                disabled={!nodeText.trim() || !selectedNode || selectedNode.data.level !== 2}
+                className="btn-add-level3"
+              >
+                ➕ Add Detail Node
+              </button>
+
+              <button 
+                onClick={deleteNode} 
+                className="btn-delete-node"
+                disabled={!selectedNode}
+              >
+                🗑️ Delete Node
+              </button>
+            </div>
+
+            {/* Save/Clear Buttons */}
+            <div className="control-group button-grid">
               <button onClick={saveMindmap} className="btn-save">
                 {currentMindmapId ? '💾 Update Mindmap' : '💾 Save New Mindmap'}
               </button>
               {currentMindmapId && (
                 <button onClick={saveAsNewCopy} className="btn-save-as">
-                  📋 Save As New Copy
+                  📋 Save As Copy
                 </button>
               )}
               <button onClick={clearMindmap} className="btn-clear">
@@ -1174,8 +1191,8 @@ Create 12-20 nodes total. Every branch must end with a detailed content node (Le
             <h3>Save As New Copy</h3>
             <input
               type="text"
-              value={currentMindmapName + ' (Copy)'}
-              onChange={(e) => setCurrentMindmapName(e.target.value)}
+              value={saveAsName}
+              onChange={(e) => setSaveAsName(e.target.value)}
               placeholder="Enter name for new copy..."
               className="modal-input"
               autoFocus

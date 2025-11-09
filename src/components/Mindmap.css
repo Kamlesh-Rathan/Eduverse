@@ -427,7 +427,7 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  cursor: pointer;
+  cursor: default;
   transition: all 0.2s ease;
 }
 
@@ -436,18 +436,11 @@
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-.hover\:scale-105:hover {
-  transform: scale(1.05);
-}
-
-.hover\:shadow-lg:hover {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
 .editable-node.editing {
   cursor: default;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
   border-color: #3b82f6 !important;
+  transform: scale(1.05);
 }
 
 .editable-node.detail-node {
@@ -467,14 +460,89 @@
   position: relative;
 }
 
-.edit-hint {
+/* Pencil Edit Button */
+.node-edit-button {
   position: absolute;
   top: 4px;
   right: 4px;
-  font-size: 0.9rem;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(59, 130, 246, 0.9);
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.node-edit-button:hover {
+  background: rgba(59, 130, 246, 1);
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Edit Container */
+.node-edit-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Edit Action Buttons (Save/Cancel) */
+.node-edit-actions {
+  position: absolute;
+  bottom: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.node-save-button,
+.node-cancel-button {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.node-save-button {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.node-save-button:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.node-cancel-button {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+.node-cancel-button:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
 }
 
 .edit-icon {
@@ -813,4 +881,356 @@ div:hover .edit-icon {
     font-size: 0.85rem;
     padding: 8px 12px;
   }
+}
+
+/* =================================================================
+   MODERN BUTTON ENHANCEMENTS WITH GLASSMORPHISM
+   ================================================================= */
+
+/* Node Creation Section Container */
+.bg-white.rounded-lg.shadow-md {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+  transition: all 0.3s ease;
+}
+
+.bg-white.rounded-lg.shadow-md:hover {
+  box-shadow: 0 12px 48px rgba(31, 38, 135, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Modern Button Base Styles */
+button.bg-blue-500,
+button.bg-green-500,
+button.bg-orange-500,
+button.bg-yellow-500,
+button.bg-red-500 {
+  position: relative;
+  overflow: hidden;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button.bg-blue-500::before,
+button.bg-green-500::before,
+button.bg-orange-500::before,
+button.bg-yellow-500::before,
+button.bg-red-500::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+button.bg-blue-500:hover::before,
+button.bg-green-500:hover::before,
+button.bg-orange-500:hover::before,
+button.bg-yellow-500:hover::before,
+button.bg-red-500:hover::before {
+  left: 100%;
+}
+
+/* Level-Specific Button Gradients */
+button.bg-blue-500 {
+  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+}
+
+button.bg-blue-500:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+}
+
+button.bg-green-500 {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+}
+
+button.bg-green-500:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+}
+
+button.bg-orange-500 {
+  background: linear-gradient(135deg, #f97316, #ea580c) !important;
+}
+
+button.bg-orange-500:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ea580c, #c2410c) !important;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4);
+}
+
+button.bg-yellow-500 {
+  background: linear-gradient(135deg, #eab308, #ca8a04) !important;
+}
+
+button.bg-yellow-500:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ca8a04, #a16207) !important;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(234, 179, 8, 0.4);
+}
+
+button.bg-red-500 {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+}
+
+button.bg-red-500:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+}
+
+/* Disabled State */
+button:disabled {
+  background: linear-gradient(135deg, #d1d5db, #9ca3af) !important;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+  opacity: 0.6;
+}
+
+/* Input Field Glassmorphism */
+input.w-full.px-4.py-2 {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(59, 130, 246, 0.2);
+  transition: all 0.3s ease;
+}
+
+input.w-full.px-4.py-2:focus {
+  background: rgba(255, 255, 255, 1);
+  border-color: rgba(59, 130, 246, 0.6);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+/* Selection Info Box */
+.text-sm.text-gray-600.bg-blue-50 {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 197, 253, 0.1));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+/* Save/Clear Controls Enhancement */
+.mindmap-controls {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+}
+
+.btn-save,
+.btn-save-as,
+.btn-clear {
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-save:hover,
+.btn-save-as:hover,
+.btn-clear:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+/* =================================================================
+   UNIFIED BUTTON STYLING - NODE CREATION BUTTONS
+   ================================================================= */
+
+.button-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.button-grid button {
+  flex: 1 1 auto;
+  min-width: 150px;
+  white-space: nowrap;
+}
+
+/* Selection Info Styling */
+.selection-info {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 197, 253, 0.1));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 12px;
+  font-size: 0.9rem;
+  color: var(--text-primary, #1e293b);
+}
+
+.selection-level {
+  color: #3b82f6;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+/* Base Button Styling for All Action Buttons */
+.btn-add-root,
+.btn-add-level1,
+.btn-add-level2,
+.btn-add-level3,
+.btn-delete-node {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shine Effect on Hover */
+.btn-add-root::before,
+.btn-add-level1::before,
+.btn-add-level2::before,
+.btn-add-level3::before,
+.btn-delete-node::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.btn-add-root:hover::before,
+.btn-add-level1:hover::before,
+.btn-add-level2:hover::before,
+.btn-add-level3:hover::before,
+.btn-delete-node:hover::before {
+  left: 100%;
+}
+
+/* Add Root Node - Blue */
+.btn-add-root {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.btn-add-root:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+}
+
+/* Add Level 1 - Green */
+.btn-add-level1 {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.btn-add-level1:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+}
+
+/* Add Level 2 - Orange */
+.btn-add-level2 {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+.btn-add-level2:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4);
+}
+
+/* Add Level 3 - Yellow */
+.btn-add-level3 {
+  background: linear-gradient(135deg, #eab308, #ca8a04);
+}
+
+.btn-add-level3:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ca8a04, #a16207);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(234, 179, 8, 0.4);
+}
+
+/* Delete Node - Red */
+.btn-delete-node {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.btn-delete-node:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+}
+
+/* Disabled State for All Buttons */
+.btn-add-root:disabled,
+.btn-add-level1:disabled,
+.btn-add-level2:disabled,
+.btn-add-level3:disabled,
+.btn-delete-node:disabled {
+  background: linear-gradient(135deg, #d1d5db, #9ca3af) !important;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+  opacity: 0.6;
+}
+
+/* Input Field Enhancement */
+.node-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  color: var(--text-primary, #1e293b);
+}
+
+.node-input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 1);
+  border-color: rgba(59, 130, 246, 0.6);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.node-input::placeholder {
+  color: var(--text-tertiary, #94a3b8);
+}
+
+/* Dark Mode Support */
+[data-theme="dark"] .node-input {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: rgba(147, 197, 253, 0.2);
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .node-input:focus {
+  background: rgba(30, 41, 59, 1);
+  border-color: rgba(147, 197, 253, 0.6);
+}
+
+[data-theme="dark"] .selection-info {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(147, 197, 253, 0.1));
+  color: #f1f5f9;
 }

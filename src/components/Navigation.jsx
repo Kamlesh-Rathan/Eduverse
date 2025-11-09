@@ -1,6 +1,6 @@
 import './Navigation.css'
 
-function Navigation({ activeSection, setActiveSection }) {
+function Navigation({ activeSection, setActiveSection, theme, toggleTheme }) {
   const navItems = [
     { id: 'doubt', label: 'Ask Doubt', icon: '❓' },
     { id: 'cheatsheets', label: 'Cheat Sheets', icon: '📄' },
@@ -15,7 +15,7 @@ function Navigation({ activeSection, setActiveSection }) {
           className="nav-logo"
           onClick={() => setActiveSection('home')}
         >
-          EduVerse
+          🎓 EduVerse
         </button>
         <div className="nav-buttons">
           {navItems.map((item) => (
@@ -29,6 +29,13 @@ function Navigation({ activeSection, setActiveSection }) {
             </button>
           ))}
         </div>
+        <button 
+          className="theme-toggle"
+          onClick={toggleTheme}
+          title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+        >
+          {theme === 'light' ? '🌙' : '☀️'}
+        </button>
       </div>
     </nav>
   )
